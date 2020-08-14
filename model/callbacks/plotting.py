@@ -44,7 +44,10 @@ class PlotValidationCallback(PytorchCallback):
         idx_to_go = list(self.indices)
         for i, batch_data in enumerate(self.data_loader):
             if i in idx_to_go:
-                X, y = batch_data
+                if self.model.batch_data_converter:
+                    X, y = self.model.batch_data_converter(batch_data)
+                else:
+                    X, y = batch_data
                 prediction = self.model.predict(X)
                 y_true.append(np.array(y))
                 y_pred.append(np.array(prediction))

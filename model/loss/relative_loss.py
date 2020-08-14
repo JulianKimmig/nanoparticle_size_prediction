@@ -27,10 +27,7 @@ def rell1_loss(input, target, size_average=None, reduce=None, reduction='mean'):
     return ret
 
 class RMAE(_Loss):
-    """
-    Creates a criterion that measures the relative mean absolute error (MAE) between each element in
-    the input :math:`x` and target :math:`y`.
-    """
+
     __constants__ = ['reduction']
 
     def __init__(self, size_average=None, reduce=None, reduction='mean'):

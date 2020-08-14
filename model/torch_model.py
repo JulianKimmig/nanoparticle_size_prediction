@@ -12,11 +12,14 @@ ureg = UnitRegistry()
 
 
 class PytorchModel():
-    def __init__(self, module, predict_function, dir=None,name=None):
+    def __init__(self, module, predict_function=None, dir=None,name=None,batch_data_converter=None):
         #privat
         self._training = False
 
         #public
+        if predict_function is None:
+            predict_function=module
+        self.batch_data_converter = batch_data_converter
         self.predict_function = predict_function
         self.module = module
         self.metrics = []
@@ -30,6 +33,11 @@ class PytorchModel():
             self.dir = dir
         if name:
             self.name = name
+
+        self.save_last_prediction_tensor=False
+        self.save_last_input_data=False
+        self.last_input_data=None
+        self.last_prediction_tensor = None
 
     def get_dir(self):
         if self._dir is None:
@@ -88,18 +96,27 @@ class PytorchModel():
         self._training = False
 
     def predict(self, data):
+        if self.save_last_input_data:
+            self.last_input_data = data
         self.module.eval()
         with torch.no_grad():
             prediction = self.predict_function(self.module, data, self.device)
-
+        if self.save_last_prediction_tensor:
+            self.last_prediction_tensor=prediction
         return prediction.detach().cpu().numpy()
 
     def train(self, data_loader, epochs=1, validation_loader=None,
-              test_loader=None, callbacks=None, start_epoch=None, verbose=True):
+              test_loader=None, callbacks=None, start_epoch=None, verbose=True,batch_data_converter=None):
         if callbacks is None:
             callbacks = []
         for callback in callbacks:
             callback.model = self
+
+        if batch_data_converter is None:
+            batch_data_converter = self.batch_data_converter
+
+        pre_bdt = self.batch_data_converter
+        self.batch_data_converter = batch_data_converter
 
         metrics = self.log.setdefault("metrics", {})
         training_metrics = metrics.setdefault("training", {})
@@ -138,8 +155,9 @@ class PytorchModel():
                 epoch_time_estimation_mean = f"{(epoch_time_estimation_mean * ureg.s).to_compact():.3f~}"
 
                 score = {m: np.mean(meter.compute_metric(m)) for m in self.metrics}
-                verb_batch_str = f"{type} {batches_done}/{batch_len}[{'=' * int(100 * batches_done / batch_len)}{' ' * int(100 * batches_to_go / batch_len)}], {epoch_time_running}/{epoch_time_estimation_mean},  {time_per_label}/sample, {score}"
-                print("\r", verb_batch_str, end="")
+                scre_text= "score(s): "+", ".join(["{}:{:.2e}".format(k,v) for k,v in score.items()])
+                verb_batch_str = f"{type} {batches_done}/{batch_len}[{'=' * int(100 * batches_done / batch_len)}{' ' * int(100 * batches_to_go / batch_len)}], {epoch_time_running}/{epoch_time_estimation_mean},  {time_per_label}/sample, {scre_text}"
+                print("\r", verb_batch_str, end=" "*10)
 
         for epoch in range(start_epoch,epochs):
             if not self._training:
@@ -157,13 +175,15 @@ class PytorchModel():
             for batch_id, batch_data in enumerate(data_loader):
                 if verbose:
                     batch_time_start = time.time()
-                X,y=batch_data
+                if self.batch_data_converter:
+                    X,y=self.batch_data_converter(batch_data)
+                else:
+                    X,y=batch_data
                 y=y.to(self.device)
                 prediction = self.predict_function(self.module, X, self.device)
-
+                #print(prediction.shape)
                 y_pred=prediction
                 y_true=y
-
                 loss = (self.loss_fn(y_pred, y_true)).mean()
                 self.optimizer.zero_grad()
                 loss.backward()
@@ -189,7 +209,10 @@ class PytorchModel():
                     step_time_start = time.time()
                 with torch.no_grad():
                     for batch_id, batch_data in enumerate(validation_loader):
-                        X,y=batch_data
+                        if self.batch_data_converter:
+                            X,y=self.batch_data_converter(batch_data)
+                        else:
+                            X,y=batch_data
                         prediction = self.predict_function(self.module, X, self.device)
                         eval_meter.update(prediction, y)
 
@@ -247,7 +270,10 @@ class PytorchModel():
                 for batch_id, batch_data in enumerate(test_loader):
                     if verbose:
                         batch_time_start = time.time()
-                    X,y=batch_data
+                    if self.batch_data_converter:
+                        X,y=self.batch_data_converter(batch_data)
+                    else:
+                        X,y=batch_data
                     prediction = self.predict_function(self.module, X, self.device)
                     eval_meter.update(prediction, y)
 
@@ -261,4 +287,5 @@ class PytorchModel():
                 print()
             testing_metrics[epoch] = test_score
 
+        self.batch_data_converter = pre_bdt
         self._training = False
