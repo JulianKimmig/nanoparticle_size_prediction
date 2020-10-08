@@ -48,7 +48,7 @@ def dataframe_to_data_predict_set(df, to_graph, graph_columns, batch_size=32, ad
     l = len(df)
     gd = {}
     for i, row in df.iterrows():
-        print("load data {}/{}".format(i + 1, l), end="\r")
+        print("load data {}/{} ({:.2f}%)".format(i + 1, l,100*(i + 1)/l), end="\r")
         gdi = row[graph_columns].values
         rep_gdi = repr(gdi)
         if rep_gdi in gd:

@@ -61,16 +61,17 @@ def load_model(config, load=True):
         return smodel(bg, h, addi)
 
     print(len(featurizer))
-    model = PytorchModel(backend.model.GCNMultiInputPredictor(in_feats=len(featurizer),
-                                                              additional_inputs=len(
-                                                                  config.get("additional_input_names")),
-                                                              hidden_graph_output=int(config.get("gcn_output_dims")),
-                                                              hidden_feats=config.get("gcn_layer_sizes"),
-                                                              post_input_module=post_input_module,
-                                                              # post_input_hidden_layer=args['post_input_hidden_layer'],
-                                                              n_tasks=len(config.get("task_names")),
-                                                              pooling=config.get("pooling"),
-                                                              ),
+main
+    model = PytorchModel(backend.model.GCNMultiInputPredictor(
+        in_feats=len(featurizer),
+        additional_inputs=len(config.get("additional_input_names")),
+        hidden_graph_output=int(config.get("gcn_output_dims")),
+        hidden_feats=config.get("gcn_layer_sizes"),
+        post_input_module=post_input_module,
+        # post_input_hidden_layer=args['post_input_hidden_layer'],
+        n_tasks=len(config.get("task_names")),
+        pooling=config.get("pooling"),
+        ),
                          predict_function=backend.model.GCNMultiInputPredictor.predict_function,
                          batch_data_converter=backend.model.GCNMultiInputPredictor.batch_data_converter,
                          name=config.get("name"),
@@ -179,7 +180,7 @@ def train(model, training_data, train_config):
         df=df,
         to_graph=smiles_to_graph_data, graph_columns=[smiles_col], task_cols=tasks,
         add_kwargs={'additional_input': add_input_cols},
-        seed=config.get("random_seed"),
+        seed=config.get("random_seed",default=np.random.randint(2**32)),
         split=[8, 1, 1]
     )
     # dataset.random_split(frac_train=0.8, frac_val=0.1, frac_test=0.1,#seed=config.get("random_seed"))
