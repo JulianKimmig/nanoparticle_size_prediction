@@ -61,7 +61,7 @@ def load_model(config, load=True):
         return smodel(bg, h, addi)
 
     print(len(featurizer))
-main
+
     model = PytorchModel(backend.model.GCNMultiInputPredictor(
         in_feats=len(featurizer),
         additional_inputs=len(config.get("additional_input_names")),
