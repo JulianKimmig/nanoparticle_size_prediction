@@ -1,3 +1,4 @@
+#uc
 import random
 
 import torch
@@ -43,12 +44,13 @@ def smile_mol_featurizer(atom_featurizer, canonical_rank=True, with_H=True):
     return to_graph
 
 
-def dataframe_to_data_predict_set(df, to_graph, graph_columns, batch_size=32, add_kwargs={}):
+def dataframe_to_data_predict_set(df, to_graph, graph_columns, batch_size=32, add_kwargs={},verbose=True):
     data_list = []
     l = len(df)
     gd = {}
     for i, row in df.iterrows():
-        print("load data {}/{} ({:.2f}%)".format(i + 1, l,100*(i + 1)/l), end="\r")
+        if verbose:
+            print("load data {}/{} ({:.2f}%)    ".format(i + 1, l,100*(i + 1)/l), end="\r")
         gdi = row[graph_columns].values
         rep_gdi = repr(gdi)
         if rep_gdi in gd:
@@ -67,12 +69,13 @@ def dataframe_to_data_predict_set(df, to_graph, graph_columns, batch_size=32, ad
                        ** _add_kwargs
         )
         data_list.append(data)
-
+    if verbose:
+        print("")
     return DataLoader(data_list, batch_size=batch_size, shuffle=False)
 
 
 def dataframe_to_data_train_sets(df, to_graph, graph_columns, task_cols, batch_size=32, add_kwargs={}, seed=None,
-                                 split=[1], shuffle=True,check_null=True):
+                                 split=[1], shuffle=True,check_null=True,verbose=True):
     data_list = []
     l = len(df)
     gd = {}
@@ -86,7 +89,8 @@ def dataframe_to_data_train_sets(df, to_graph, graph_columns, task_cols, batch_s
                 raise ValueError("one of the add columns contains none values")
 
     for i, row in df.iterrows():
-        print("load data {}/{}".format(i + 1, l), end="\r")
+        if verbose:
+            print("load data {}/{}    ".format(i + 1, l), end="\r")
         gdi = row[graph_columns].values
         rep_gdi = repr(gdi)
         if rep_gdi in gd:
@@ -108,6 +112,8 @@ def dataframe_to_data_train_sets(df, to_graph, graph_columns, task_cols, batch_s
             **_add_kwargs
         )
         data_list.append(data)
+    if verbose:
+        print("")
     if shuffle:
         if seed is not None:
             rand = random.Random(seed)

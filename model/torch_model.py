@@ -43,7 +43,7 @@ class PytorchModel():
         if self._dir is None:
             raise ValueError("Model has not dir please set via model.dir=<dir> "
                              "or fall back to default by providing"
-                             f"({smartchem.utils.smartchem.data_dir}/<model.name>) a model name")
+                             f"(models/<model.name>) a model name")
         return self._dir
 
     def set_dir(self, dir):
@@ -57,7 +57,7 @@ class PytorchModel():
     def set_name(self, name):
         self._name = name
         if self._dir is None:
-            self.dir = os.path.join(smartchem.utils.smartchem.data_dir,self._name)
+            self.dir = os.path.join("models",self._name)
 
     name = property(get_name, set_name)
 
