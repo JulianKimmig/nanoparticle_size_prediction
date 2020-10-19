@@ -1,0 +1,146 @@
+{
+    "model": {
+        "additional_input_names": [
+            "dp",
+            "with_pva",
+            "polymer_concentration"
+        ],
+        "backend": "pytorch_geometric",
+        "fcn_model": {
+            "layer": [
+                {
+                    "args": [
+                        67,
+                        32
+                    ],
+                    "module": "Linear"
+                },
+                {
+                    "args": [
+                        0.1
+                    ],
+                    "module": "Dropout"
+                },
+                {
+                    "module": "ReLU"
+                },
+                {
+                    "args": [
+                        32,
+                        16
+                    ],
+                    "module": "Linear"
+                },
+                {
+                    "args": [
+                        0.1
+                    ],
+                    "module": "Dropout"
+                },
+                {
+                    "module": "ReLU"
+                }
+            ]
+        },
+        "featurizer": [
+            "atom_symbol_hcnopsclbr_other_one_hot",
+            "atom_degree_one_hot",
+            "atom_implicit_valence_one_hot",
+            "atom_explicit_valence_one_hot",
+            "atom_formal_charge",
+            "atom_partial_charge",
+            "atom_hybridization_one_hot",
+            "atom_is_aromatic",
+            "atom_total_num_H_one_hot",
+            "atom_num_radical_electrons",
+            "atom_mass"
+        ],
+        "gcn_layer_sizes": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ],
+        "gcn_output_dims": 64,
+        "learning_rate": 0.001,
+        "loss_function": {
+            "kwargs": {},
+            "name": "RMAE"
+        },
+        "metrics": [
+            "relmae",
+            "rmse"
+        ],
+        "name": "np_model_1",
+        "path": "pretrained/np_model_1",
+        "pooling": [
+            "weight_sum",
+            "max"
+        ],
+        "smiles_column": "circular_smiles_10",
+        "task_names": [
+            "z_average"
+        ]
+    },
+    "random_seed": 234,
+    "training": {
+        "batch_size": 64,
+        "callbacks": [
+            {
+                "args": [
+                    "validation_loader"
+                ],
+                "kwargs": {
+                    "every_n_epoch": "sqrt"
+                },
+                "name": "PlotValidationCallback"
+            },
+            {
+                "args": [
+                    "validation_loader"
+                ],
+                "kwargs": {
+                    "every_n_epoch": "sqrt"
+                },
+                "name": "ValidationPointRecorderCallback"
+            },
+            {
+                "kwargs": {
+                    "patience": 2000
+                },
+                "name": "EarlyStoppingCallback"
+            },
+            {
+                "name": "MetricsCallback"
+            },
+            {
+                "kwargs": {
+                    "every_n_epoch": 100
+                },
+                "name": "ModelCheckpointCallback"
+            },
+            {
+                "kwargs": {
+                    "every_n_epoch": 20
+                },
+                "name": "ModelSaveCallback"
+            }
+        ],
+        "epochs": 100000,
+        "training_history": [
+            {
+                "args": {
+                    "config": null,
+                    "force_new": false,
+                    "model": false,
+                    "model_path": "pretrained/np_model_1",
+                    "predict": null,
+                    "train": "data/train_data_size_kept_z_average_cutoff_500_dispersity_cutoff_0.3_cutoff_size_disp_200_cutoff_group_size_3_cutoff_min_conc_3_valid_threshold_0.2_smiles_out_[CH2][C](C)(C(=O)OCC).csv"
+                },
+                "date": "2020-10-12 09:58:43"
+            }
+        ]
+    }
+}
