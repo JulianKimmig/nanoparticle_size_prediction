@@ -3,7 +3,7 @@ import torch
 from torch import nn
 from torch_geometric.nn.conv.gcn_conv import GCNConv
 from torch_geometric.nn.pool import avg_pool
-from torch_scatter import scatter_add, scatter_max
+from torch_scatter import scatter_add, scatter_max, scatter_mean
 import numpy as np
 
 
@@ -32,6 +32,10 @@ class PoolMax(nn.Module):
         maxed_nodes, _ = scatter_max(feats, batch, dim=0)
         return maxed_nodes
 
+class PoolMean(nn.Module):
+    def forward(self, feats, batch):
+        meaned_nodes  = scatter_mean(feats, batch, dim=0)
+        return meaned_nodes
 
 class PoolSum(nn.Module):
     def forward(self, feats, batch):
@@ -79,7 +83,6 @@ class GCNMultiInputPredictor(nn.Module):
             for i in range(1, len(hidden_feats)):
                 if hidden_feats[i] is None:
                     hidden_feats[i] = hidden_feats[i - 1]
-
         in_channels = in_feats
 
         gnn_l = []
@@ -103,6 +106,9 @@ class GCNMultiInputPredictor(nn.Module):
                 last_out += in_channels
             elif p == "max":
                 pools.append(PoolMax())
+                last_out += in_channels
+            elif p == "mean":
+                pools.append(PoolMean())
                 last_out += in_channels
             elif p == "weight_sum":
                 pools.append(WeightedSum(in_channels))
@@ -145,7 +151,8 @@ class GCNMultiInputPredictor(nn.Module):
         feats = self.graph_out(feats)
 
         feats = torch.cat([feats, add_ip], dim=1)
-        feats = self.post_input_module(feats)
+        if self.post_input_module is not None:
+            feats = self.post_input_module(feats)
 
         if self.final_layer_needed:
             feats = self.final_layer(feats)
