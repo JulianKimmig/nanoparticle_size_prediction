@@ -23,7 +23,7 @@ atom_symbol_hcnopsclbr_one_hot = OneHotFeaturizer(
 atom_symbol_hcnopsclbr_other_one_hot = OneHotFeaturizer(
     possible_values=['H','C','N','O', 'P','S', 'Cl', 'Br',None],
     pre_featurize=lambda atom: atom.GetSymbol(),
-    name="atom_symbol_one_hot"
+    name="atom_symbol_hcnopsclbr_other_one_hot"
 )
 
 atom_atomic_number_one_hot= OneHotFeaturizer(
