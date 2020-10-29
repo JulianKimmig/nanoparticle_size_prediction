@@ -122,7 +122,7 @@ def update_config(config, args):
     model_config.get("gcn_layer_sizes", default=[None, None, None, None, None, None])
     model_config.get("task_names", default=['z_average'])
     model_config.get("learning_rate", default=0.0001)
-    model_config.get('metrics', default=["relmae"])
+    model_config.get('metrics', default=["MAPE"])
     model_config.get("pooling", default=["weight_sum", "max"]),
     train_config.get("batch_size", default=32)
     train_config.get("epochs", default=10)

@@ -54,7 +54,7 @@
             "name": "RMAE"
         },
         "metrics": [
-            "relmae",
+            "MAPE",
             "rmse"
         ],
         "name": "np_model_10",
