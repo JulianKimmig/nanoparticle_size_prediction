@@ -218,7 +218,7 @@ class Meter(object):
             return sc_loss.rell1_loss(y_true, y_pred).data.item()
         return self.multilabel_score(score, reduction)
 
-    def relmae(self, reduction='none'):
+    def MAPE(self, reduction='none'):
         """Compute mean absolute error.
 
         Parameters
@@ -310,8 +310,8 @@ class Meter(object):
             return self.rmse(reduction)
         elif metric_name == 'roc_auc_score':
             return self.roc_auc_score(reduction)
-        elif metric_name == 'relmae':
-            return self.relmae(reduction)
+        elif metric_name == 'MAPE':
+            return self.MAPE(reduction)
         else:
-            raise ValueError('Expect metric_name to be "r2" or "mae" or "relmae" '
-                             'or "roc_auc_score" or "relmae", got {}'.format(metric_name))
+            raise ValueError('Expect metric_name to be "r2" or "mae" or "MAPE" '
+                             'or "roc_auc_score" or "MAPE", got {}'.format(metric_name))
