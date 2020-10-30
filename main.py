@@ -13,6 +13,7 @@ import time
 import pandas as pd
 import numpy as np
 
+
 from featurizer import load_featurizer
 from model.torch_model import PytorchModel
 import model.loss as model_loss
@@ -44,33 +45,41 @@ def load_model(config, load=True):
     featurizer = load_featurizer(config.get("featurizer"))
 
     fcn_model_config = config.getsubdict("fcn_model")
-    post_input_module = generate_fcn_model(fcn_model_config, input_dims=(
-        int(config.get("gcn_output_dims")) + len(config.get("additional_input_names")),
-    ))
-
-    model = PytorchModel(backend.model.GCNMultiInputPredictor(
-        in_feats=len(featurizer),
-        additional_inputs=len(config.get("additional_input_names")),
-        hidden_graph_output=int(config.get("gcn_output_dims")),
-        hidden_feats=config.get("gcn_layer_sizes"),
-        post_input_module=post_input_module,
-        n_tasks=len(config.get("task_names")),
-        pooling=config.get("pooling"),
+    post_input_module = generate_fcn_model(
+        fcn_model_config,
+        input_dims=(
+            int(config.get("gcn_output_dims"))
+            + len(config.get("additional_input_names")),
         ),
-                         predict_function=backend.model.GCNMultiInputPredictor.predict_function,
-                         batch_data_converter=backend.model.GCNMultiInputPredictor.batch_data_converter,
-                         name=config.get("name"),
-                         dir=os.path.abspath(config.get("path")),
-                         )
+    )
+
+    model = PytorchModel(
+        backend.model.GCNMultiInputPredictor(
+            in_feats=len(featurizer),
+            additional_inputs=len(config.get("additional_input_names")),
+            hidden_graph_output=int(config.get("gcn_output_dims")),
+            hidden_feats=config.get("gcn_layer_sizes"),
+            post_input_module=post_input_module,
+            n_tasks=len(config.get("task_names")),
+            pooling=config.get("pooling"),
+        ),
+        predict_function=backend.model.GCNMultiInputPredictor.predict_function,
+        batch_data_converter=backend.model.GCNMultiInputPredictor.batch_data_converter,
+        name=config.get("name"),
+        dir=os.path.abspath(config.get("path")),
+    )
     model.gcn_featurizer = featurizer
     model.config = config
 
-    optimizer = torch.optim.Adam(model.module.parameters(), lr=config.get("learning_rate"))
+    optimizer = torch.optim.Adam(
+        model.module.parameters(), lr=config.get("learning_rate")
+    )
 
     loss_fn = getattr(model_loss, config.get("loss_function", "name"))(
-        **config.get("loss_function", "kwargs"))
+        **config.get("loss_function", "kwargs")
+    )
 
-    model.compile(optimizer, loss_fn, metrics=config.get('metrics'))
+    model.compile(optimizer, loss_fn, metrics=config.get("metrics"))
 
     if load:
         try:
@@ -89,13 +98,14 @@ def update_config(config, args):
     model_config = config.getsubdict("model")
     train_config = config.getsubdict("training")
 
-    model_config.get("name", default=os.path.basename(os.path.dirname(os.path.abspath(config.file))))
+    model_config.get(
+        "name", default=os.path.basename(os.path.dirname(os.path.abspath(config.file)))
+    )
 
     print("Model name:", model_config.get("name"))
     if args.model_path:
         model_config.put("path", value=args.model_path)
-    model_config.get("path",
-                     default=os.path.dirname(os.path.abspath(config.file)))
+    model_config.get("path", default=os.path.dirname(os.path.abspath(config.file)))
 
     print("Model name:", model_config.get("path"))
 
@@ -107,29 +117,34 @@ def update_config(config, args):
     model_config.get("loss_function", "name", default="RMAE")
     model_config.get("loss_function", "kwargs", default={})
 
-    model_config.get("featurizer", default=["atom_symbol_one_hot",
-                                            "atom_degree_one_hot",
-                                            "atom_implicit_valence_one_hot",
-                                            "atom_formal_charge",
-                                            "atom_num_radical_electrons",
-                                            "atom_hybridization_one_hot",
-                                            "atom_is_aromatic",
-                                            "atom_total_num_H_one_hot"])
+    model_config.get(
+        "featurizer",
+        default=[
+            "atom_symbol_one_hot",
+            "atom_degree_one_hot",
+            "atom_implicit_valence_one_hot",
+            "atom_formal_charge",
+            "atom_num_radical_electrons",
+            "atom_hybridization_one_hot",
+            "atom_is_aromatic",
+            "atom_total_num_H_one_hot",
+        ],
+    )
 
     model_config.get("gcn_output_dims", default=100)
     model_config.get("backend", default="pytorch_geometric")
     model_config.get("additional_input_names", default=[])
     model_config.get("gcn_layer_sizes", default=[None, None, None, None, None, None])
-    model_config.get("task_names", default=['z_average'])
+    model_config.get("task_names", default=["z_average"])
     model_config.get("learning_rate", default=0.0001)
-    model_config.get('metrics', default=["MAPE"])
+    model_config.get("metrics", default=["MAPE"])
     model_config.get("pooling", default=["weight_sum", "max"]),
     train_config.get("batch_size", default=32)
     train_config.get("epochs", default=10)
     train_config.get("callbacks", default=[])
 
 
-def train(model, training_data, train_config,verbose=True):
+def train(model, training_data, train_config, verbose=True):
     model.save()
     model_config = model.config
     df = training_data
@@ -145,7 +160,9 @@ def train(model, training_data, train_config,verbose=True):
         raise ValueError("Missing input columns: {}".format(",".join(missing_inputs)))
 
     smiles_col = model_config.get("smiles_column")
-    assert smiles_col in df.columns, "smiles column '{}' not in dataframe".format(smiles_col)
+    assert smiles_col in df.columns, "smiles column '{}' not in dataframe".format(
+        smiles_col
+    )
 
     cache_file_path = os.path.join(model.dir, "training", "data")
     os.makedirs(cache_file_path, exist_ok=True)
@@ -153,15 +170,20 @@ def train(model, training_data, train_config,verbose=True):
     backend = model_config.get("backend")
     if backend == "pytorch_geometric":
         import graph_backends.pytorch_geometric_based as backend
-        smiles_to_graph_data = backend.data.smile_mol_featurizer(atom_featurizer=model.gcn_featurizer)
+
+        smiles_to_graph_data = backend.data.smile_mol_featurizer(
+            atom_featurizer=model.gcn_featurizer
+        )
     else:
         raise NotImplementedError("cannot load backend '{}'".format(backend))
 
     train_set, val_set, test_set = backend.data.dataframe_to_data_train_sets(
         df=df,
-        to_graph=smiles_to_graph_data, graph_columns=[smiles_col], task_cols=tasks,
-        add_kwargs={'additional_input': add_input_cols},
-        seed=config.get("random_seed",default=np.random.randint(2**32)),
+        to_graph=smiles_to_graph_data,
+        graph_columns=[smiles_col],
+        task_cols=tasks,
+        add_kwargs={"additional_input": add_input_cols},
+        seed=config.get("random_seed", default=np.random.randint(2 ** 32)),
         split=[8, 1, 1],
         verbose=verbose,
     )
@@ -172,30 +194,32 @@ def train(model, training_data, train_config,verbose=True):
     cbs = train_config.get("callbacks").copy()
     for cb in cbs:
         for key, val in cb.get("kwargs", {}).items():
-            if val == 'validation_loader':
+            if val == "validation_loader":
                 cb["kwargs"][key] = val_set
-            if val == 'training_loader':
+            if val == "training_loader":
                 cb["kwargs"][key] = train_set
 
         for i, arg in enumerate(cb.get("args", [])):
-            if arg == 'validation_loader':
+            if arg == "validation_loader":
                 cb["args"][i] = val_set
-            if arg == 'training_loader':
+            if arg == "training_loader":
                 cb["args"][i] = train_set
     train_config.save()
     cbs = [callbacks.deserialize(cb) for cb in cbs]
-    model.train(data_loader=train_set, validation_loader=val_set, test_loader=test_set,
-                epochs=train_config.get("epochs"),
-                callbacks=cbs,
-
-                )
+    model.train(
+        data_loader=train_set,
+        validation_loader=val_set,
+        test_loader=test_set,
+        epochs=train_config.get("epochs"),
+        callbacks=cbs,
+    )
     model.save()
 
 
 def predict(model, dataframe, return_array=False, verbose=True):
     model_config = model.config
     df = dataframe.copy()
-    df.reset_index( inplace=True)
+    df.reset_index(inplace=True)
     tasks = ["predicted_" + t for t in model_config.get("task_names")]
 
     add_input_cols = model_config.get("additional_input_names")
@@ -204,20 +228,26 @@ def predict(model, dataframe, return_array=False, verbose=True):
         raise ValueError("Missing input columns: {}".format(",".join(missing_inputs)))
 
     smiles_col = model_config.get("smiles_column")
-    assert smiles_col in df.columns, "smiles column '{}' not in dataframe".format(smiles_col)
+    assert smiles_col in df.columns, "smiles column '{}' not in dataframe".format(
+        smiles_col
+    )
 
     backend = model_config.get("backend")
     if backend == "pytorch_geometric":
         import graph_backends.pytorch_geometric_based as backend
-        smiles_to_graph_data = backend.data.smile_mol_featurizer(atom_featurizer=model.gcn_featurizer)
+
+        smiles_to_graph_data = backend.data.smile_mol_featurizer(
+            atom_featurizer=model.gcn_featurizer
+        )
     else:
         raise NotImplementedError("cannot load backend '{}'".format(backend))
 
     predict_set = backend.data.dataframe_to_data_predict_set(
         df=df,
-        to_graph=smiles_to_graph_data, graph_columns=[smiles_col],
-        add_kwargs={'additional_input': add_input_cols},
-        verbose=verbose
+        to_graph=smiles_to_graph_data,
+        graph_columns=[smiles_col],
+        add_kwargs={"additional_input": add_input_cols},
+        verbose=verbose,
     )
     #
     for t in tasks:
@@ -234,42 +264,54 @@ def predict(model, dataframe, return_array=False, verbose=True):
     return df
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("RUN")
-    parser = argparse.ArgumentParser(description='Nanoparticle size prediction model')
+    parser = argparse.ArgumentParser(description="Nanoparticle size prediction model")
 
-    parser.add_argument('--train', type=str,
-                        help='train or predict')
+    parser.add_argument("--train", type=str, help="train or predict")
 
-    parser.add_argument('--predict', type=str,
-                        help='train or predict')
+    parser.add_argument("--predict", type=str, help="train or predict")
 
-    def_conf= os.path.join(os.path.expanduser("~"), ".smartchem","np_model_{}".format(int(time.time())),
-                           "config.json")
+    def_conf = os.path.join(
+        os.path.expanduser("~"),
+        ".smartchem",
+        "np_model_{}".format(int(time.time())),
+        "config.json",
+    )
 
-    parser.add_argument('--config', type=str, default=None,
-                        help='path to the config file, default "{}"'.format(
-                            os.path.join(os.path.expanduser("~"), ".smartchem","np_model_{int(time.time())}",
-                                         "config.json")
-                        ))
+    parser.add_argument(
+        "--config",
+        type=str,
+        default=None,
+        help='path to the config file, default "{}"'.format(
+            os.path.join(
+                os.path.expanduser("~"),
+                ".smartchem",
+                "np_model_{int(time.time())}",
+                "config.json",
+            )
+        ),
+    )
 
-    parser.add_argument('--model_path', type=str, help='model path')
+    parser.add_argument("--model_path", type=str, help="model path")
 
-    parser.add_argument('--model', help='print model', action="store_true")
-    parser.add_argument('--force_new', help='dont load model model', action="store_true")
+    parser.add_argument("--model", help="print model", action="store_true")
+    parser.add_argument(
+        "--force_new", help="dont load model model", action="store_true"
+    )
 
     args = parser.parse_args()
 
     config_file = args.config
 
-    model_path=args.model_path
+    model_path = args.model_path
 
     if config_file is None:
         if model_path is not None:
             config_file = os.path.join(model_path, "config.json")
         else:
-            config_file=def_conf
-    config_file=os.path.abspath(config_file)
+            config_file = def_conf
+    config_file = os.path.abspath(config_file)
     config = JsonDict(config_file)
     print("Using config:", config.file)
 
@@ -279,18 +321,20 @@ if __name__ == '__main__':
 
     if args.train:
         train_dict = config.getsubdict("training")
-        training_history = train_dict.get("training_history",default=[])
+        training_history = train_dict.get("training_history", default=[])
         if args.train == "__last":
-            assert len(training_history)>0, "if train on __last the history must not be empty!"
+            assert (
+                len(training_history) > 0
+            ), "if train on __last the history must not be empty!"
             args.train = training_history[-1]["args"]["train"]
-        training_history.append({"args":vars(args),
-                                 "date":datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                                 })
-        train_dict.put("training_history",value=training_history)
+        training_history.append(
+            {"args": vars(args), "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+        )
+        train_dict.put("training_history", value=training_history)
         train(model, pd.read_csv(args.train), config.getsubdict("training"))
     if args.predict:
         predict_df = predict(model, pd.read_csv(args.predict))
-        predict_df.to_csv(args.predict.rsplit(".",maxsplit=1)[0]+"_prediction.csv")
+        predict_df.to_csv(args.predict.rsplit(".", maxsplit=1)[0] + "_prediction.csv")
 
     if args.model:
         print(model.module)

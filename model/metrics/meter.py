@@ -1,4 +1,4 @@
-#uc
+# uc
 """Evaluation of model performance."""
 # pylint: disable= no-member, arguments-differ, invalid-name
 import numpy as np
@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from scipy.stats import pearsonr
 from sklearn.metrics import roc_auc_score
 
-__all__ = ['Meter']
+__all__ = ["Meter"]
 
 # pylint: disable=E1101
 from .. import loss as sc_loss
@@ -62,6 +62,7 @@ class Meter(object):
     >>> print(meter.compute_metric('mae', reduction='sum'))
     3.2815767526626587
     """
+
     def __init__(self, mean=None, std=None):
         self.mask = []
         self.y_pred = []
@@ -125,7 +126,7 @@ class Meter(object):
 
         return mask, y_pred, y_true
 
-    def _reduce_scores(self, scores, reduction='none'):
+    def _reduce_scores(self, scores, reduction="none"):
         """Finalize the scores to return.
 
         Parameters
@@ -142,17 +143,20 @@ class Meter(object):
             * If ``reduction == 'mean'``, return the mean of scores for all tasks.
             * If ``reduction == 'sum'``, return the sum of scores for all tasks.
         """
-        if reduction == 'none':
+        if reduction == "none":
             return scores
-        elif reduction == 'mean':
+        elif reduction == "mean":
             return np.mean(scores)
-        elif reduction == 'sum':
+        elif reduction == "sum":
             return np.sum(scores)
         else:
             raise ValueError(
-                "Expect reduction to be 'none', 'mean' or 'sum', got {}".format(reduction))
+                "Expect reduction to be 'none', 'mean' or 'sum', got {}".format(
+                    reduction
+                )
+            )
 
-    def multilabel_score(self, score_func, reduction='none'):
+    def multilabel_score(self, score_func, reduction="none"):
         """Evaluate for multi-label prediction.
 
         Parameters
@@ -180,7 +184,7 @@ class Meter(object):
             scores.append(score_func(task_y_true, task_y_pred))
         return self._reduce_scores(scores, reduction)
 
-    def pearson_r2(self, reduction='none'):
+    def pearson_r2(self, reduction="none"):
         """Compute squared Pearson correlation coefficient.
 
         Parameters
@@ -195,11 +199,13 @@ class Meter(object):
             * If ``reduction == 'mean'``, return the mean of scores for all tasks.
             * If ``reduction == 'sum'``, return the sum of scores for all tasks.
         """
+
         def score(y_true, y_pred):
             return pearsonr(y_true.numpy(), y_pred.numpy())[0] ** 2
+
         return self.multilabel_score(score, reduction)
 
-    def mae(self, reduction='none'):
+    def mae(self, reduction="none"):
         """Compute mean absolute error.
 
         Parameters
@@ -214,11 +220,13 @@ class Meter(object):
             * If ``reduction == 'mean'``, return the mean of scores for all tasks.
             * If ``reduction == 'sum'``, return the sum of scores for all tasks.
         """
+
         def score(y_true, y_pred):
             return sc_loss.rell1_loss(y_true, y_pred).data.item()
+
         return self.multilabel_score(score, reduction)
 
-    def MAPE(self, reduction='none'):
+    def MAPE(self, reduction="none"):
         """Compute mean absolute error.
 
         Parameters
@@ -233,12 +241,13 @@ class Meter(object):
             * If ``reduction == 'mean'``, return the mean of scores for all tasks.
             * If ``reduction == 'sum'``, return the sum of scores for all tasks.
         """
+
         def score(y_true, y_pred):
             return F.l1_loss(y_true, y_pred).data.item()
+
         return self.multilabel_score(score, reduction)
 
-
-    def rmse(self, reduction='none'):
+    def rmse(self, reduction="none"):
         """Compute root mean square error.
 
         Parameters
@@ -253,11 +262,13 @@ class Meter(object):
             * If ``reduction == 'mean'``, return the mean of scores for all tasks.
             * If ``reduction == 'sum'``, return the sum of scores for all tasks.
         """
+
         def score(y_true, y_pred):
             return np.sqrt(F.mse_loss(y_pred, y_true).cpu().item())
+
         return self.multilabel_score(score, reduction)
 
-    def roc_auc_score(self, reduction='none'):
+    def roc_auc_score(self, reduction="none"):
         """Compute roc-auc score for binary classification.
 
         Parameters
@@ -274,13 +285,16 @@ class Meter(object):
         """
         # Todo: This function only supports binary classification and we may need
         #  to support categorical classes.
-        assert (self.mean is None) and (self.std is None), \
-            'Label normalization should not be performed for binary classification.'
+        assert (self.mean is None) and (
+            self.std is None
+        ), "Label normalization should not be performed for binary classification."
+
         def score(y_true, y_pred):
             return roc_auc_score(y_true.long().numpy(), torch.sigmoid(y_pred).numpy())
+
         return self.multilabel_score(score, reduction)
 
-    def compute_metric(self, metric_name, reduction='none'):
+    def compute_metric(self, metric_name, reduction="none"):
         """Compute metric based on metric name.
 
         Parameters
@@ -302,16 +316,18 @@ class Meter(object):
             * If ``reduction == 'mean'``, return the mean of scores for all tasks.
             * If ``reduction == 'sum'``, return the sum of scores for all tasks.
         """
-        if metric_name == 'r2':
+        if metric_name == "r2":
             return self.pearson_r2(reduction)
-        elif metric_name == 'mae':
+        elif metric_name == "mae":
             return self.mae(reduction)
-        elif metric_name == 'rmse':
+        elif metric_name == "rmse":
             return self.rmse(reduction)
-        elif metric_name == 'roc_auc_score':
+        elif metric_name == "roc_auc_score":
             return self.roc_auc_score(reduction)
-        elif metric_name == 'MAPE':
+        elif metric_name == "MAPE":
             return self.MAPE(reduction)
         else:
-            raise ValueError('Expect metric_name to be "r2" or "mae" or "MAPE" '
-                             'or "roc_auc_score" or "MAPE", got {}'.format(metric_name))
+            raise ValueError(
+                'Expect metric_name to be "r2" or "mae" or "MAPE" '
+                'or "roc_auc_score" or "MAPE", got {}'.format(metric_name)
+            )
