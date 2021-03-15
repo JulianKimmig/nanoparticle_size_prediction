@@ -6,13 +6,6 @@ from torch.nn.modules.loss import _Loss
 
 
 def rell1_loss(input, target, size_average=None, reduce=None, reduction="mean"):
-    # type: (Tensor, Tensor, Optional[bool], Optional[bool], str) -> Tensor
-    r"""l1_loss(input, target, size_average=None, reduce=None, reduction='mean') -> Tensor
-
-    Function that takes the mean element-wise absolute value difference.
-
-    See :class:`~torch.nn.L1Loss` for details.
-    """
     if not (target.size() == input.size()):
         warnings.warn(
             "Using a target size ({}) that is different to the input size ({}). "
