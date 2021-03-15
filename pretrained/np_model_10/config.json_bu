@@ -40,12 +40,12 @@
             "atom_mass"
         ],
         "gcn_layer_sizes": [
-            null,
-            null,
-            null,
-            null,
-            null,
-            null
+            55,
+            55,
+            55,
+            55,
+            55,
+            55
         ],
         "gcn_output_dims": 64,
         "learning_rate": 0.001,
