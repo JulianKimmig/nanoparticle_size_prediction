@@ -19,6 +19,7 @@ from model.torch_model import PytorchModel
 import model.loss as model_loss
 from model import callbacks
 
+DEFAULT_DEVICE="cpu"
 
 def generate_fcn_model(config, input_dims):
     def load_layer(layer_config):
@@ -35,7 +36,7 @@ def generate_fcn_model(config, input_dims):
     return fcn_model
 
 
-def load_model(config, load=True):
+def load_model(config, load=True, device=DEFAULT_DEVICE):
     backend = config.get("backend")
     if backend == "pytorch_geometric":
         import graph_backends.pytorch_geometric_based as backend
@@ -76,7 +77,7 @@ def load_model(config, load=True):
     )
 
     loss_fn = getattr(model_loss, config.get("loss_function", "name"))(
-        **config.get("loss_function", "kwargs")
+        **config.get("loss_function", "kwargs",as_json_dict=False)
     )
 
     model.compile(optimizer, loss_fn, metrics=config.get("metrics"))
@@ -84,7 +85,7 @@ def load_model(config, load=True):
     if load:
         try:
             print("try loading model from {}".format(model.default_filename()))
-            model.load()
+            model.load(device=device)
             print("load successful")
         except FileNotFoundError as e:
             print("new model, please train me!")
@@ -241,18 +242,17 @@ def predict(model, dataframe, return_array=False, verbose=True):
         )
     else:
         raise NotImplementedError("cannot load backend '{}'".format(backend))
-
     predict_set = backend.data.dataframe_to_data_predict_set(
         df=df,
         to_graph=smiles_to_graph_data,
         graph_columns=[smiles_col],
-        add_kwargs={"additional_input": add_input_cols},
+        add_kwargs={"additional_input": list(add_input_cols)},
         verbose=verbose,
     )
     #
     for t in tasks:
         if t not in df.columns:
-            df[t] = None
+            df[t] = np.nan
 
     for batch_data in predict_set:
         X, y = model.batch_data_converter(batch_data)
@@ -312,7 +312,7 @@ if __name__ == "__main__":
         else:
             config_file = def_conf
     config_file = os.path.abspath(config_file)
-    config = JsonDict(config_file)
+    config = JsonDict(config_file,default_as_json_dict=False)
     print("Using config:", config.file)
 
     update_config(config, args)

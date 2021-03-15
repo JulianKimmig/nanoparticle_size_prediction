@@ -100,10 +100,13 @@ class PytorchModel:
             filename,
         )
 
-    def load(self, filename=None, strict=True):
+    def load(self, filename=None, strict=True,device=None):
         if filename is None:
             filename = self.default_filename()
-        load = torch.load(filename)
+        if device:
+            load = torch.load(filename, map_location=torch.device(device))
+        else:
+            load = torch.load(filename)
         self.module.load_state_dict(load["model_state_dict"], strict=strict)
         self.log = load["model_log"]
         if hasattr(self, "device"):
