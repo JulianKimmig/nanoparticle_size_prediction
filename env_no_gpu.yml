@@ -1,0 +1,26 @@
+name: nanoparticle_size_prediction
+channels:
+  - conda-forge
+  - defaults
+  - pytorch
+  - numba
+dependencies:
+  - python>=3.6
+  - pip
+  - jupyterlab
+  - rdkit
+  #https://pytorch.org/get-started/locally/
+  - pytorch==1.7.0
+  - cpuonly
+  - pint
+  - imageio
+  - seaborn
+  - cairosvg
+  - pip:
+      - --find-links https://pytorch-geometric.com/whl/torch-1.7.0+cpu.html
+      - torch-scatter
+      - torch-sparse
+      - torch-cluster
+      - torch-spline-conv
+      - torch-geometric
+      - Json-Dict
