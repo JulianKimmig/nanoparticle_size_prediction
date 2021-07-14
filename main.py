@@ -77,7 +77,7 @@ def load_model(config, load=True, device=DEFAULT_DEVICE):
     )
 
     loss_fn = getattr(model_loss, config.get("loss_function", "name"))(
-        **config.get("loss_function", "kwargs",as_json_dict=False)
+        **config.get("loss_function", "kwargs")
     )
 
     model.compile(optimizer, loss_fn, metrics=config.get("metrics"))
@@ -312,7 +312,7 @@ if __name__ == "__main__":
         else:
             config_file = def_conf
     config_file = os.path.abspath(config_file)
-    config = JsonDict(config_file,default_as_json_dict=False)
+    config = JsonDict(config_file)
     print("Using config:", config.file)
 
     update_config(config, args)
@@ -338,3 +338,7 @@ if __name__ == "__main__":
 
     if args.model:
         print(model.module)
+
+
+#e.g. python main.py --model_path="pretrained/np_model_14" --train="data/train_data_size_kept_z_average_cutoff_500_dispersity_cutoff_0.3_cutoff_size_disp_200_cutoff_group_size_3_cutoff_min_conc_3_valid_threshold_0.2_smiles_out_[CH2][C](C)(C(=O)OC(C)(C)C).[CH2][C](C)(C(=O)Oc1ccccc1.csv"
+
