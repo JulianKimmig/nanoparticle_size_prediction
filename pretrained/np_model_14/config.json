@@ -73,7 +73,7 @@
             "MAPE",
             "rmse"
         ],
-        "name": "np_model_0",
+        "name": "np_model_14",
         "path": "pretrained/np_model_14",
         "pooling": [
             "weight_sum",
